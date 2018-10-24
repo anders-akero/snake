@@ -1,102 +1,187 @@
-<canvas id ="gc" width="400" height="400"></canvas>
+<canvas id="gc" width="400" height="400"></canvas>
 
 <script>
-window.onload = function() {
-    canvas = document.getElementById('gc');
-    ctx = canvas.getContext('2d');
-    document.addEventListener('keydown', keyPush);
-    setInterval(action, 1000/5);
-};
+    let canvas;
+    let ctx;
+    window.onload = function () {
+        canvas = document.getElementById('gc');
+        ctx = canvas.getContext('2d');
+        document.addEventListener('keydown', keyPush);
+        setInterval(action, 1000 / 5);
+        new Sound('start');
+    };
 
-// player start pos
-let px = py = 10;
+    // grid size
+    let gs = 20;
+    let tc = 20;
 
-// grid size
-let gs = tc = 20;
+    // Player pos X
+    let px = gs / 2;
+    // Player pos Y
+    let py = px;
 
-// apple start pos
-let ax = ay = 15;
+    // apple pos X
+    let ax = Math.floor(gs - gs / 4);
+    // apple pos Y
+    let ay = ax;
 
-// players next step from current pos
-let xv = yv = 0;
-xv = 1;// sending the player to the right on start
+    // history of the snake
+    const trail = [];
 
-// history of the snake
-const trail = [];
+    // default tail length
+    const defaultTailLength = 5;
+    let tail = defaultTailLength;
 
-// default tail lenght
-const defaultTailLength = 5;
-let tail = defaultTailLength;
+    /**
+     * Plays a sound
+     */
+    class Sound {
+        /**
+         * Values:
+         * - error
+         * - progress
+         * @param type string
+         */
+        constructor(type = 'unknown') {
+            this.audio = new AudioContext();
 
-function action() {
-    px += xv;
-    py += yv;
+            switch (type) {
+                case 'start':
+                    this.play(999, 210, 800);
+                    break;
+                case 'error':
+                    this.play(999, 220, 300);
+                    break;
+                case 'progress':
+                    this.play(100, 520, 200);
+                    break;
+                default:
+                    throw new Error(`Unknown sound type "${type}"`);
+            }
+        }
 
-    // wrapping the game, IE move the snake to the other side
-    if (px < 0) {
-        px = tc - 1;
-    }
-    if (px > tc-1) {
-        px = 0;
-    }
-    if (py < 0) {
-        py = tc - 1;
-    }
-    if (py > tc-1) {
-        py = 0;
-    }
-
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = 'lime';
-    for (let i = 0; i < trail.length; i++) {
-        ctx.fillRect(trail[i].x*gs, trail[i].y*gs, gs-2, gs-2);
-        if (trail[i].x === px && trail[i].y === py) {
-            // user eat their own tail
-            tail = defaultTailLength;
+        play(vol, freq, duration) {
+            const a = this.audio;
+            const v = a.createOscillator();
+            const u = a.createGain();
+            v.connect(u);
+            v.frequency.value = freq;
+            v.type = 'square';
+            u.connect(a.destination);
+            u.gain.value = vol * 0.01;
+            v.start(a.currentTime);
+            v.stop(a.currentTime + duration * 0.001);
         }
     }
-    // adding new location to history
-    trail.push({x: px, y: py});
-    while (trail.length > tail) {
-        trail.shift();
+
+    /**
+     * Moves the player
+     */
+    class Move {
+        constructor(){
+            this.way = 'right';
+        }
+        set direction(newDirection) {
+            if (!['up', 'right', 'down', 'left'].includes(newDirection)) {
+                throw new Error('Called with invalid value');
+            }
+            if (newDirection === this.oppositeDirection) {
+                new Sound('error');
+                return;
+            }
+            this.way = newDirection;
+            action();
+        }
+
+        get direction() {
+            return this.way;
+        }
+
+        get oppositeDirection() {
+            switch (this.way) {
+                case 'up':
+                    return 'down';
+                case 'right':
+                    return 'left';
+                case 'down':
+                    return 'up';
+                case 'left':
+                    return 'right';
+            }
+        }
     }
 
-    if (ax === px && ay === py) {
-        // user eat an apple
-        tail++;
-        // give the apple a new random location
+    const move = new Move();
+
+    function action() {
+        px += move.direction === 'left' ? -1 : move.direction === 'right' ? 1 : 0;
+        py += move.direction === 'up' ? -1 : move.direction === 'down' ? 1 : 0;
+
+        // wrapping the game, IE move the snake to the other side
+        if (px < 0) {
+            px = tc - 1;
+        }
+        if (px > tc - 1) {
+            px = 0;
+        }
+        if (py < 0) {
+            py = tc - 1;
+        }
+        if (py > tc - 1) {
+            py = 0;
+        }
+
+        // clears the whole screen and creates an new empty background
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'lime';
+        for (let i = 0; i < trail.length; i++) {
+            // fills the trail
+            ctx.fillRect(trail[i].x * gs, trail[i].y * gs, gs - 2, gs - 2);
+
+            if (trail[i].x === px && trail[i].y === py) {
+                // user eat their own tail
+                tail = defaultTailLength;
+                new Sound('error');
+            }
+        }
+        // adding new location to history
+        trail.push({x: px, y: py});
+        while (trail.length > tail) {
+            trail.shift();
+        }
+
+        if (ax === px && ay === py) {
+            new Sound('progress');
+            // user eat an apple
+            tail++;
+            // give the apple a new random location
 //TODO: Make sure that the apple can not be at a location where the tail already is.
 //TODO: If no empty space left. Then the player win
-        ax = Math.floor(Math.random() * tc);
-        ay = Math.floor(Math.random() * tc);
+            ax = Math.floor(Math.random() * tc);
+            ay = Math.floor(Math.random() * tc);
+        }
+
+        // fills out the apple
+        ctx.fillStyle = 'red';
+        ctx.fillRect(ax * gs, ay * gs, gs - 2, gs - 2);
     }
 
-    ctx.fillStyle = 'red';
-    ctx.fillRect(ax*gs, ay*gs, gs-2, gs-2);
-}
-
-function keyPush(e) {
-//TODO: Make sure the user can not go backwards
-    switch(e.key) {
-        case 'ArrowLeft':
-            xv = -1;
-            yv = 0;
-            break;
-        case 'ArrowUp':
-            xv = 0;
-            yv = -1;
-            break;
-        case 'ArrowRight':
-            xv = 1;
-            yv = 0;
-            break;
-        case 'ArrowDown':
-            xv = 0;
-            yv = 1;
-            break;
+    function keyPush(e) {
+        switch (e.key) {
+            case 'ArrowUp':
+                move.direction = 'up';
+                break;
+            case 'ArrowRight':
+                move.direction = 'right';
+                break;
+            case 'ArrowDown':
+                move.direction = 'down';
+                break;
+            case 'ArrowLeft':
+                move.direction = 'left';
+                break;
+        }
     }
-    action();
-}
 </script>
