@@ -5,8 +5,8 @@ window.onload = function() {
     canvas = document.getElementById('gc');
     ctx = canvas.getContext('2d');
     document.addEventListener('keydown', keyPush);
-    setInterval(game, 1000/5);
-}
+    setInterval(action, 1000/5);
+};
 
 // player start pos
 let px = py = 10;
@@ -28,7 +28,7 @@ const trail = [];
 const defaultTailLength = 5;
 let tail = defaultTailLength;
 
-function game() {
+function action() {
     px += xv;
     py += yv;
 
@@ -83,7 +83,7 @@ function keyPush(e) {
         case 'ArrowLeft':
             xv = -1;
             yv = 0;
-            break
+            break;
         case 'ArrowUp':
             xv = 0;
             yv = -1;
@@ -97,5 +97,6 @@ function keyPush(e) {
             yv = 1;
             break;
     }
+    action();
 }
 </script>
