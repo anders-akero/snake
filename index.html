@@ -1,3 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake</title>
+</head>
+<body>
+
 This game saves some data such as the highscore in a local storage in the browser
 <canvas id="gc" width="400" height="400"></canvas>
 
@@ -126,7 +134,7 @@ High score: <span id="score_highest"></span>
         }
 
         set highest(points) {
-            points = points? points : 0;
+            points = points ? points : 0;
             this.highscore = points;
             localStorage.setItem('highscore', points);
             document.getElementById('score_highest').innerText = points;
@@ -305,3 +313,6 @@ High score: <span id="score_highest"></span>
         }
     }
 </script>
+
+</body>
+</html>
