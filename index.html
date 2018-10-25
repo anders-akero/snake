@@ -17,13 +17,16 @@ High score: <span id="score_highest"></span>
     };
 
     // grid size
-    let gs = 20;
-    let tc = 20;
+    const gs = 20;
+    const tc = 20;
 
-    // Player pos X
-    let px = gs / 2;
-    // Player pos Y
-    let py = px;
+    // space between
+    const sb = 2;
+
+    // player "head" pos X
+    let hx = gs / 2;
+    // player "head" pos Y
+    let hy = hx;
 
     // apple pos X
     let ax = Math.floor(gs - gs / 4);
@@ -168,33 +171,34 @@ High score: <span id="score_highest"></span>
     const score = new Score;
 
     function action() {
-        px += move.direction === 'left' ? -1 : move.direction === 'right' ? 1 : 0;
-        py += move.direction === 'up' ? -1 : move.direction === 'down' ? 1 : 0;
+        hx += move.direction === 'left' ? -1 : move.direction === 'right' ? 1 : 0;
+        hy += move.direction === 'up' ? -1 : move.direction === 'down' ? 1 : 0;
 
         // wrapping the game, IE move the snake to the other side
-        if (px < 0) {
-            px = tc - 1;
+        if (hx < 0) {
+            hx = tc - 1;
         }
-        if (px > tc - 1) {
-            px = 0;
+        if (hx > tc - 1) {
+            hx = 0;
         }
-        if (py < 0) {
-            py = tc - 1;
+        if (hy < 0) {
+            hy = tc - 1;
         }
-        if (py > tc - 1) {
-            py = 0;
+        if (hy > tc - 1) {
+            hy = 0;
         }
 
         // clears the whole screen and creates an new empty background
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // tail
         ctx.fillStyle = 'lime';
         for (let i = 0; i < trail.length; i++) {
             // fills the trail
-            ctx.fillRect(trail[i].x * gs, trail[i].y * gs, gs - 2, gs - 2);
+            ctx.fillRect(trail[i].x * gs, trail[i].y * gs, gs - sb, gs - sb);
 
-            if (trail[i].x === px && trail[i].y === py) {
+            if (trail[i].x === hx && trail[i].y === hy) {
                 // user eat their own tail
                 tail = defaultTailLength;
                 new Sound('error');
@@ -203,12 +207,46 @@ High score: <span id="score_highest"></span>
         }
 
         // adding new location to history
-        trail.push({x: px, y: py});
+        trail.push({x: hx, y: hy});
         while (trail.length > tail) {
             trail.shift();
         }
 
-        if (ax === px && ay === py) {
+        // head
+        ctx.fillStyle = 'green';
+        ctx.fillRect(hx * gs, hy * gs, gs - sb, gs - sb);
+        if (['up', 'down'].includes(move.direction)) {
+            // eyes
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(hx * gs + 1, hy * gs + 7, 3, 3);
+            ctx.fillRect(hx * gs + 14, hy * gs + 7, 3, 3);
+
+            // tongue
+            ctx.fillStyle = 'red';
+            if (move.direction === 'up') {
+                ctx.fillRect(hx * gs + 7, hy * gs - 6, 1, 10);
+                ctx.fillRect(hx * gs + 9, hy * gs - 6, 1, 10);
+            } else {
+                ctx.fillRect(hx * gs + 7, hy * gs + 14, 1, 10);
+                ctx.fillRect(hx * gs + 9, hy * gs + 14, 1, 10);
+            }
+        } else {
+            // eyes
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(hx * gs + 7, hy * gs + 1, 3, 3);
+            ctx.fillRect(hx * gs + 7, hy * gs + 14, 3, 3);
+            // tongue
+            ctx.fillStyle = 'red';
+            if (move.direction === 'right') {
+                ctx.fillRect(hx * gs + 14, hy * gs + 7, 10, 1);
+                ctx.fillRect(hx * gs + 14, hy * gs + 9, 10, 1);
+            } else {
+                ctx.fillRect(hx * gs - 6, hy * gs + 7, 10, 1);
+                ctx.fillRect(hx * gs - 6, hy * gs + 9, 10, 1);
+            }
+        }
+
+        if (ax === hx && ay === hy) {
             // user eat an apple
             new Sound('progress');
             score.eatApple();
@@ -222,7 +260,7 @@ High score: <span id="score_highest"></span>
 
         // fills out the apple
         ctx.fillStyle = 'red';
-        ctx.fillRect(ax * gs, ay * gs, gs - 2, gs - 2);
+        ctx.fillRect(ax * gs, ay * gs, gs - sb, gs - sb);
     }
 
     function keyPush(e) {
