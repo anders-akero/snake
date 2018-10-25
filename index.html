@@ -251,11 +251,28 @@ High score: <span id="score_highest"></span>
             new Sound('progress');
             score.eatApple();
             tail++;
-            // give the apple a new random location
-//TODO: Make sure that the apple can not be at a location where the tail already is.
-//TODO: If no empty space left. Then the player win
-            ax = Math.floor(Math.random() * tc);
-            ay = Math.floor(Math.random() * tc);
+            // finding a good place to hide the apple
+            let lookingForEmptySpaceForApple = true;
+            while (lookingForEmptySpaceForApple) {
+                // give the apple a new random location
+                ax = Math.floor(Math.random() * tc);
+                ay = Math.floor(Math.random() * tc);
+
+                lookingForEmptySpaceForApple = false;
+                if (ax === hx && ay === hy) {
+                    // apple ended up on the head
+                    lookingForEmptySpaceForApple = true;
+                    continue;
+                }
+                for (let i = 0; i < trail.length; i++) {
+                    const t = trail[i];
+                    if (t.x === ax && t.y === ay) {
+                        // apple ended up on the tail
+                        lookingForEmptySpaceForApple = true;
+                        break;
+                    }
+                }
+            }
         }
 
         // fills out the apple
