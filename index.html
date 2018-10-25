@@ -5,6 +5,7 @@ This game saves some data such as the highscore in a local storage in the browse
 Current score: <span id="score_current"></span>
 <br>
 High score: <span id="score_highest"></span>
+<button onclick="score.clearHighscore()">Clear highscore</button>
 
 <script>
     let canvas;
@@ -108,6 +109,10 @@ High score: <span id="score_highest"></span>
             this.current = 0;
         }
 
+        clearHighscore() {
+            this.highest = 0;
+        }
+
         set current(points) {
             this.points = points;
             if (this.points > this.highest) {
@@ -121,6 +126,7 @@ High score: <span id="score_highest"></span>
         }
 
         set highest(points) {
+            points = points? points : 0;
             this.highscore = points;
             localStorage.setItem('highscore', points);
             document.getElementById('score_highest').innerText = points;
