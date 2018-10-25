@@ -1,5 +1,10 @@
 <canvas id="gc" width="400" height="400"></canvas>
 
+<br>
+Current score: <span id="score_current"></span>
+<br>
+High score: <span id="score_highest"></span>
+
 <script>
     let canvas;
     let ctx;
@@ -47,7 +52,7 @@
 
             switch (type) {
                 case 'start':
-                    this.play(999, 210, 800);
+                    this.play(50, 210, 800);
                     break;
                 case 'error':
                     this.play(999, 220, 300);
@@ -75,12 +80,60 @@
     }
 
     /**
+     * Keeps track of the scores
+     */
+    class Score {
+        constructor() {
+            this.highest = 0;
+            this.current = 0;
+        }
+
+        eatApple() {
+            this.increase();
+        }
+
+        biteYourself() {
+            this.reset();
+        }
+
+        increase(amount = 1) {
+            this.current += amount;
+        }
+
+        reset() {
+            this.current = 0;
+        }
+
+        set current(points) {
+            this.points = points;
+            if (this.points > this.highest) {
+                this.highest = this.points;
+            }
+            document.getElementById('score_current').innerText = points;
+        }
+
+        get current() {
+            return this.points;
+        }
+
+        set highest(points) {
+            this.highscore = points;
+            document.getElementById('score_highest').innerText = points;
+        }
+
+        get highest() {
+            return this.highscore;
+        }
+    }
+
+    /**
      * Moves the player
      */
     class Move {
-        constructor(){
+        constructor() {
             this.way = 'right';
         }
+
         set direction(newDirection) {
             if (!['up', 'right', 'down', 'left'].includes(newDirection)) {
                 throw new Error('Called with invalid value');
@@ -111,7 +164,8 @@
         }
     }
 
-    const move = new Move();
+    const move = new Move;
+    const score = new Score;
 
     function action() {
         px += move.direction === 'left' ? -1 : move.direction === 'right' ? 1 : 0;
@@ -144,8 +198,10 @@
                 // user eat their own tail
                 tail = defaultTailLength;
                 new Sound('error');
+                score.biteYourself();
             }
         }
+
         // adding new location to history
         trail.push({x: px, y: py});
         while (trail.length > tail) {
@@ -153,8 +209,9 @@
         }
 
         if (ax === px && ay === py) {
-            new Sound('progress');
             // user eat an apple
+            new Sound('progress');
+            score.eatApple();
             tail++;
             // give the apple a new random location
 //TODO: Make sure that the apple can not be at a location where the tail already is.
